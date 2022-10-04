@@ -1,0 +1,1 @@
+CD src && DEL **ss && CLS && javac ServerDynamic.java -proc:none && java ServerDynamic && DEL **ss
