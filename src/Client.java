@@ -195,12 +195,20 @@ public class Client extends JFrame implements Runnable  {
             // Initialize the message box
             chatGUI = new ChatGUI(pseudo);
             chatGUI.setOutputStream(out);
+
+            // Initialize the minesweeper
+            minesweeper = new Main();
             
+            minesweeper.getGUI().setOutputStream(out);
+            pack();
+            levelGameModeInfo.setText(String.valueOf(minesweeper.getField().getLevel()));
+                
             // Read message from the server
             
             chatReader.start();
 
             add(chatGUI);
+            add(minesweeper.getGUI());
             pack();
             setVisible(true);
 
@@ -217,14 +225,12 @@ public class Client extends JFrame implements Runnable  {
      */
     @Override
     public void run() {
-        minesweeper = new Main();
-        add(minesweeper.getGUI());
-        pack();
-        levelGameModeInfo.setText(String.valueOf(minesweeper.getField().getLevel()));
 
         String messageReceived;
         while (!message.equals("end")) {
             try {
+                int xReceived;
+                int yReceived;
                 messageReceived = in.readUTF();
                 if(messageReceived.equals("-1:initField")){
                     int dimParam;
@@ -248,8 +254,21 @@ public class Client extends JFrame implements Runnable  {
                             
                         }
                     }
-                    minesweeper.getGUI().resetMinesweeper();
+                    minesweeper.getGUI().resetMinesweeperParameters();
+                    minesweeper.getGUI().initializationField();
                     pack();
+                }
+
+                else if(messageReceived.equals("-1:rightClick")){
+                    xReceived = in.readInt();
+                    yReceived = in.readInt();
+                    minesweeper.getGUI().updateBoxOnClient(xReceived, yReceived, "rightClick");
+
+                }
+                else if(messageReceived.equals("-1:leftClick")){
+                    xReceived = in.readInt();
+                    yReceived = in.readInt();
+                    minesweeper.getGUI().updateBoxOnClient(xReceived, yReceived, "leftClick");
                 }
                 else{
                     chatGUI.addTextToChat(messageReceived);

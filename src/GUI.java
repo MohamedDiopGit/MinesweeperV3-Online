@@ -4,6 +4,7 @@ import static javax.swing.SwingUtilities.isRightMouseButton;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
@@ -11,9 +12,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 // import java.util.Scanner;  // For terminal entries mode, uncomment it if you want to use terminal entries. 
 
+import javax.swing.AbstractButton;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -90,6 +96,8 @@ public class GUI extends JPanel {
      */
     private JLabel levelGameModeInfo = new JLabel();
 
+    private DataOutputStream outStream;
+    private List<JButton> buttons = new ArrayList<JButton>();
     /**
      * Constructor for the GUI, which starts the game.
      * 
@@ -156,43 +164,6 @@ public class GUI extends JPanel {
         startNewGame();
     }
 
-    /**
-     * Restarts and displays the grid field with hidden boxes
-     * and add the start {@code ActionListener} on each of them
-     * to know where to start the game,
-     * in order to trigger the {@code initializationField()} method on a specific
-     * box.
-     * 
-     * @see #initializationField(int, int)
-     */
-    public void displayStartEmptyField() {
-        remove(panelCenter); // initialization of the panel
-        panelCenter = new JPanel();
-        add(panelCenter, BorderLayout.CENTER);
-
-        int dimParam = this.field.getDim(); // Get the dimensions of the field
-        panelCenter.setLayout(new GridLayout(dimParam, dimParam));
-
-        for (int x = 0; x < dimParam; x++) {
-            for (int y = 0; y < dimParam; y++) { // For loop on the matrix to display all objects
-                JButton box = new JButton(); // Clickable button on each minefield's boxes
-                box.setBackground(Color.WHITE);
-                box.setPreferredSize(new Dimension(40, 40));
-                panelCenter.add(box);
-
-                final int xOnStart = x;
-                final int yOnStart = y;
-                box.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        setVisible(false);
-                        initializationField(xOnStart, yOnStart);
-                        setVisible(true); // Update of the frame fixing frozen frame bug
-                    }
-                });
-            }
-        }
-    }
 
     /**
      * This function takes the first "clicked" box {@code JButton}
@@ -206,7 +177,7 @@ public class GUI extends JPanel {
      *                 field
      * @param yOnStart : the y position of the same box
      */
-    public void initializationField(int xOnStart, int yOnStart) { // Initialization of boxes with different values for a
+    public void initializationField() { // Initialization of boxes with different values for a
                                                                   // certain area / allow to place flags on mines
 
         remove(panelCenter); // initialization of the panel
@@ -215,6 +186,7 @@ public class GUI extends JPanel {
 
         int dimParam = this.field.getDim(); // Get the dimensions of the field
         panelCenter.setLayout(new GridLayout(dimParam, dimParam));
+        buttons.clear();
 
         // Loop on the entire field elements
         for (int x = 0; x < dimParam; x++) {
@@ -230,97 +202,49 @@ public class GUI extends JPanel {
                 JButton box = new JButton(this.field.getElementFromXY(x, y, false)); // Clickeable button on each
                 box.setBackground(Color.WHITE);
                 box.setPreferredSize(new Dimension(40, 40));
-                panelCenter.add(box);
+                buttons.add(box);
+                panelCenter.add(buttons.get(buttons.size() - 1));
 
-                if (box.getText() == "x") { // If there is a mine
-                    box.setText(""); // Hide it with a white background and not text
+                box.setText(""); // Hide it with a white background and not text
 
-                    box.addMouseListener(new MouseAdapter() { // OnClick event : Place a flag or trigger the "Game over
-                                                              // event"
-                        @Override
-                        public void mouseClicked(MouseEvent event) {
-
-                            if (isRightMouseButton(event)) // Set the box with a red flag
-                            {
-                                if (field.getElementFromXY(xBox, yBox, false) == "x" && box.getText() != "F") { // Check
-                                                                                                                 // if
-                                                                                                                 // there
-                                                                                                                 // is a
-                                                                                                                 // mine
-                                                                                                                 // and
-                                                                                                                 // not
-                                                                                                                 // flagged
-                                                                                                                 // before
-                                    scoreTemp++;
-                                    score.setText(String.valueOf(scoreTemp));
-                                    if (scoreTemp == field.getNumberOfMines()) {
-                                        JOptionPane.showMessageDialog(main, "You won ! : what a player !",
-                                                "Game win", JOptionPane.WARNING_MESSAGE);
-                                        reInitField();
-                                    }
+                box.addMouseListener(new MouseAdapter() { // OnClick event : Place a flag or trigger the "Game over
+                                                          // event"
+                    @Override
+                    public void mouseClicked(MouseEvent event) {
+                        String boxType = field.getElementFromXY(xBox, yBox, false);
+                        String typeClicked = "";
+                        if (isRightMouseButton(event)) // Set the box with a red flag
+                        {
+                            typeClicked = "rightClick";
+                            if (boxType.equals("x") && box.getText() != "F") {
+                                scoreTemp++;
+                                score.setText(String.valueOf(scoreTemp));
+                                if (scoreTemp == field.getNumberOfMines()) {
+                                    JOptionPane.showMessageDialog(main, "You won ! : what a player !",
+                                            "Game win", JOptionPane.WARNING_MESSAGE);
+                                    resetMineSweeperOnServer();
+                                    reInitField();
                                 }
-                                box.setText("F");
-                            } else if (isLeftMouseButton(event) && box.getText() != "F") { // Check if Left click and
-                                                                                            // not a mine discovered :
-                                                                                            // GAME OVER
+                            }
+                            box.setText("F");
+                        }
+
+                        else if (isLeftMouseButton(event) && box.getText() != "F") {
+                            typeClicked = "leftClick";
+                            clickBoxOnServer(xBox, yBox, typeClicked);
+                            if(boxType.equals("x")){
+                                box.setText("X");
                                 // Code To popup an Game Over message :
                                 JOptionPane.showMessageDialog(main, "You clicked on a mine : Game Over LOOSER >-<",
                                         "GAME OVER", JOptionPane.WARNING_MESSAGE);
+                                resetMineSweeperOnServer(); 
                                 reInitField();
                             }
-                        }
-                    });
-                }
 
-                else if (box.getText() == "0") { // Operations on non-mined boxes
-                    double deltaX = Math.abs(xOnStart - xBox);
-                    double deltaY = Math.abs(yOnStart - yBox);
-                    double result = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                    Random alea = new Random();
-
-                    if (result <= alea.nextDouble((int) dimParam / 1.5)) { // Undisover boxes that are in a calculated
-                                                                           // area with euclidian distance as radius
-
-                        box.setBackground(Color.GRAY); // Color the unblocked boxes with gray color
-                        box.setText(field.getElementFromXY(xBox, yBox, true)); // Update the text in the box with the
-                                                                               // computed value
-
-                        switch (Integer.valueOf(box.getText())) { // Set the Color of the number depending on its value
-                            case 0:
+                            else if(boxType.equals("0")){
+                                box.setText(field.getElementFromXY(xBox, yBox, true)); 
                                 box.setBackground(Color.GRAY);
-                                break;
-                            case 1:
-                                box.setForeground(Color.BLUE);
-                                break;
-                            case 2:
-                                box.setForeground(Color.GREEN);
-                                break;
-                            case 3:
-                                box.setForeground(Color.RED);
-                                break;
-                            case 4:
-                                box.setForeground(Color.ORANGE);
-                                break;
-                            case 5:
-                                box.setForeground(Color.MAGENTA);
-                                break;
-                            case 6:
-                                box.setForeground(Color.CYAN);
-                                break;
-
-                        }
-                    } else { // Boxes outside the calculated area
-                        box.setText(""); // The boxes are still hidden
-                        box.addActionListener(new ActionListener() { // OnClick event : Discover them and their computed
-                                                                     // value
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-
-                                box.setText(field.getElementFromXY(xBox, yBox, true)); // Change the value with the
-                                                                                       // computed one
-                                box.setBackground(Color.GRAY);
-                                switch (Integer.valueOf(box.getText())) { // Set the Color of the number depending on
-                                                                          // its value
+                                switch ( Integer.valueOf(box.getText()) ) {
                                     case 0:
                                         box.setBackground(Color.GRAY);
                                         break;
@@ -344,39 +268,33 @@ public class GUI extends JPanel {
                                         break;
 
                                 }
-
                             }
-                        });
-                        box.addMouseListener(new MouseAdapter() { // OnClick event : Place a flag or trigger the "Game
-                                                                  // over event"
-                            @Override
-                            public void mouseClicked(MouseEvent event) {
-
-                                if (isRightMouseButton(event)) // Set the box with a red flag
-                                {
-                                    if (field.getElementFromXY(xBox, yBox, false) == "x" && box.getText() != "F") { // Chech
-                                                                                                                     // if
-                                                                                                                     // there
-                                                                                                                     // is
-                                                                                                                     // a
-                                                                                                                     // mine
-                                                                                                                     // and
-                                                                                                                     // not
-                                                                                                                     // flagged
-                                                                                                                     // before
-                                        scoreTemp++;
-                                        score.setText(String.valueOf(scoreTemp));
-                                    }
-                                    box.setText("F");
-                                }
-                            }
-                        });
+                        }
                     }
-                }
+                });
             }
         }
     }
 
+    /**
+     * Update the selected box on the server with the type of click.
+     * @param x
+     * @param y
+     * @param typeClick
+     */
+    public void clickBoxOnServer(int x, int y, String typeClick){
+        try {
+            outStream.writeUTF("-1:" + typeClick);
+            outStream.writeInt(x);
+            outStream.writeInt(y);
+        } catch (IOException e) {
+            System.out.println("error writing message : clickBoxOnServer");
+        }
+    }
+
+    public void setOutputStream(DataOutputStream out){
+        this.outStream = out;
+    }
     /**
      * Activates the restart button by adding an {@code ActionListener} event
      * on the restart button. It will call the {@code reInitField()} method.
@@ -411,16 +329,14 @@ public class GUI extends JPanel {
         timer.start();
 
         field.initField();
-        this.displayStartEmptyField();
+        this.initializationField();
     }
-    public void resetMinesweeper() {
+    public void resetMinesweeperParameters() {
         seconds = 0;
         scoreTemp = 0;
         score.setText(String.valueOf(scoreTemp));
         timeSession.setText(String.valueOf(seconds));
         timer.start();
-
-        this.displayStartEmptyField();
     }
     /**
      * Processes the time elapsed since the beginning of the start of a game
@@ -468,5 +384,55 @@ public class GUI extends JPanel {
     public Field getField() {
         return this.field;
     }
+    public void updateBoxOnClient(int xReceived, int yReceived, String typeClicked) {
+        if(typeClicked.equals("leftClick")){
+            // Update the box
+            buttons.get( yReceived + xReceived*field.getDim() ).setText(field.getElementFromXY(xReceived, yReceived, true));
+            buttons.get( yReceived + xReceived*field.getDim() ).setBackground(Color.GRAY);
 
+            if(!buttons.get( yReceived + xReceived*field.getDim() ).getText().equals("x")){
+                switch ( Integer.valueOf(buttons.get( yReceived + xReceived*field.getDim() ).getText()) ) {
+                    case 0:
+                        buttons.get( yReceived + xReceived*field.getDim() ).setBackground(Color.GRAY);
+                        break;
+                    case 1:
+                        buttons.get( yReceived + xReceived*field.getDim() ).setForeground(Color.BLUE);
+                        break;
+                    case 2:
+                        buttons.get( yReceived + xReceived*field.getDim() ).setForeground(Color.GREEN);
+                        break;
+                    case 3:
+                        buttons.get( yReceived + xReceived*field.getDim() ).setForeground(Color.RED);
+                        break;
+                    case 4:
+                        buttons.get( yReceived + xReceived*field.getDim() ).setForeground(Color.ORANGE);
+                        break;
+                    case 5:
+                        buttons.get( yReceived + xReceived*field.getDim() ).setForeground(Color.MAGENTA);
+                        break;
+                    case 6:
+                        buttons.get( yReceived + xReceived*field.getDim() ).setForeground(Color.CYAN);
+                        break;
+    
+                }
+            }
+        }
+        else if(typeClicked.equals("rightClick")){
+            // Update the box
+            if(buttons.get( yReceived + xReceived*field.getDim() ).equals("x") ){
+                scoreTemp++;
+                score.setText(String.valueOf(score));
+            }
+            buttons.get( yReceived + xReceived*field.getDim() ).setText("F");
+        }
+    }
+
+    public void resetMineSweeperOnServer(){
+        try {
+            outStream.writeUTF("-1:resetMineSweeper");
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
 }

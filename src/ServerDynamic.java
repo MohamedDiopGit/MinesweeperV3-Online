@@ -155,6 +155,8 @@ public class ServerDynamic extends JFrame implements Runnable {
         minesweeper.getGUI().selectorLevelGame(level);
         levelGameModeInfo.setText(String.valueOf(level));
         pack();
+
+        sendToAllField();
     }
     private void showTotalConnectedClients() {
         chatGUI.addTextToChat("Info: " + pseudoClients.size() + " client(s) connected.");
@@ -193,18 +195,33 @@ public class ServerDynamic extends JFrame implements Runnable {
             chatGUI.addTextToChat(getUtcDateTime() + " [" + pseudoClient + "]: " + " is connected");
             notifyConnectionToAll(idClient, pseudoClient, true, out);
             
-
+            sendToAllField();
             // Read data from client
             String message = "";
             while (!message.equals("end")) {
                 try {
                     message = entree.readUTF();
-                    chatGUI.addTextToChat(getUtcDateTime() + " :[" + pseudoClient + "]: " + message);
 
-                    sendToAll(pseudoClient, message); // Broadcast to the others connected clients
+                    
+                    if(message.equals("-1:rightClick")){
+                        int xReceived = entree.readInt();
+                        int yReceived = entree.readInt();
+                        minesweeper.getGUI().updateBoxOnClient(xReceived, yReceived, "rightClick");
+                        updateBoxToAll(xReceived, yReceived, message, out);
+                    }
+                    else if(message.equals("-1:leftClick")){
+                        int xReceived = entree.readInt();
+                        int yReceived = entree.readInt();
+                        minesweeper.getGUI().updateBoxOnClient(xReceived, yReceived, "leftClick");
+                        updateBoxToAll(xReceived, yReceived, message, out);
+                    }
+                    else if(message.equals("-1:resetMineSweeper")){
+                        resetAllMineSweeper();
+                    }
+                    else{
 
-                    if (message.equals("server-off")) {
-                        message = "end";
+                        chatGUI.addTextToChat(getUtcDateTime() + " :[" + pseudoClient + "]: " + message);
+                        sendToAll(pseudoClient, message); // Broadcast to the others connected clients
                     }
                 } catch (EOFException | SocketException e) {
                     message = "end";
@@ -229,6 +246,29 @@ public class ServerDynamic extends JFrame implements Runnable {
             System.out.println("Failed to connect on thread: " + idClient + ",please retry.");
         }
         clients.remove(currentThread());
+    }
+
+    private void resetServerMineSweeper(){
+        minesweeper.getGUI().reInitField();
+    }
+    private void resetAllMineSweeper() {
+        resetServerMineSweeper();
+        sendToAllField();
+    }
+
+    private void updateBoxToAll(int xReceived, int yReceived, String typeClicked, DataOutputStream outClient) {
+        outs.forEach(o -> {
+            try {
+                if(!o.equals(outClient)) {
+                    o.writeUTF(typeClicked);
+                    o.writeInt(xReceived);
+                    o.writeInt(yReceived);
+                }
+            } catch (IOException e) {
+                System.out.println("error writing message : notifyConnectionToAll");
+            }
+        });
+        chatGUI.addTextToChat("Update box: " + xReceived + " " + yReceived + " " + typeClicked);
     }
 
     /**
