@@ -15,7 +15,7 @@ public class Field {
     /**
      * Number of mines to place on the minefield.
      */
-    private final int nbMinesToPlace;
+    private int nbMinesToPlace;
     private final static int nbMines[] = { 3, 7, 10, 15 }; // Possible mines of the minefield depending on level
                                                            // difficulty
     private final static int dimParam[] = { 5, 7, 9, 12 }; // Possible dimensions of the minefield depending on level
@@ -24,7 +24,7 @@ public class Field {
     /**
      * Edge dimension of the square minefield.
      */
-    private final int dimParameter;
+    private int dimParameter;
 
     /**
      * Minefield that contains every mines and their position.
@@ -247,6 +247,16 @@ public class Field {
             return "0";
         }
 
+    }
+
+    public void setFieldFromClient(int nbMinesToPlace, int dimParameter){
+        this.dimParameter = dimParameter;
+        this.nbMinesToPlace = nbMinesPlaced;
+        this.fieldGrid = new boolean[dimParameter][dimParameter]; 
+    }
+
+    public void setFieldGrid(int x, int y, boolean value){
+        this.fieldGrid[x][y] = value;
     }
 
 }

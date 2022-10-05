@@ -1,8 +1,10 @@
-
 import javax.swing.*;
 import java.net.*;
 import java.util.Random;
 import java.io.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * {@code Client} : Client program that makes a connection with a {@code Server}
@@ -32,6 +34,17 @@ public class Client extends JFrame implements Runnable  {
     /**
      * Default constructor for the client session.
      */
+    /**
+     * minesweeper GUI for the game : Minesweeper.
+     */
+    private Main minesweeper;
+    private JLabel levelGameModeInfo = new JLabel();
+    
+    /**
+     * Label for connected clients in the subMenu
+     */
+    private JMenu connectedClients = new JMenu("Connected clients");
+    private static List<String> pseudoClients = new ArrayList<String>();
     Client() {
         // setClientParameters();
         Random r = new Random();
@@ -40,8 +53,86 @@ public class Client extends JFrame implements Runnable  {
 
 
         setTitle("Client-"+alea + ": " + "Chat box");
+        setLayout(new FlowLayout());
+
+        // Chat GUI display (Menu)
+        JMenuItem totalConnectedClient = new JMenuItem("Total connected clients");
+        JMenu infoMenu = new JMenu("Server infos");
+
+        infoMenu.add(totalConnectedClient);    
+        infoMenu.add(connectedClients);
+
+        totalConnectedClient.addActionListener(e-> showTotalConnectedClients() );
+
+        JMenuBar menuBar = new JMenuBar();
+        menuBar.add(infoMenu);
+        setJMenuBar(menuBar);
+
+        // GUI : Minesweeper interface
+
+        // minesweeper = new Main();
+        // add(minesweeper.getGUI());
+
+        JMenuItem menu = new JMenu("Mode");
+        JMenuItem easyMode = new JMenuItem("EASY");
+        JMenuItem mediumMode = new JMenuItem("MEDIUM");
+        JMenuItem hardMode = new JMenuItem("HARD");
+        JMenuItem customMode = new JMenuItem("CUSTOM");
+        JButton quit = new JButton("Quit");
+        JButton saveGame = new JButton("Save");
+
+        
+
+        quit.setBackground(Color.RED);
+        quit.setForeground(Color.WHITE);
+        saveGame.setBackground(Color.ORANGE);
+        saveGame.setForeground(Color.WHITE);
+
+        menu.add(easyMode);
+        menu.add(mediumMode);
+        menu.add(hardMode);
+        menu.add(customMode);
+        menuBar.add(quit);
+        menuBar.add(saveGame);
+        menuBar.add(menu);
+
+        // Add menu options
+        saveGame.addActionListener(evt -> saveGameLevel());
+        quit.addActionListener(evt -> System.exit(0));
+
+        // Add different mode in the menu
+        easyMode.addActionListener(evt -> selectorLevelGame(Levels.EASY));
+        mediumMode.addActionListener(evt -> selectorLevelGame(Levels.MEDIUM));
+        hardMode.addActionListener(evt -> selectorLevelGame(Levels.HARD));
+        customMode.addActionListener(evt -> selectorLevelGame(Levels.CUSTOM));
+
+
+        menuBar.add(levelGameModeInfo);
+        
+
+        // Frame settings
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Shuts down the server when exit
+        pack();
+        // setResizable(false);
+        setVisible(true);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Shuts down the server when exit
     }
+
+    // GUI METHODS
+
+    private void saveGameLevel() {
+        minesweeper.getGUI().saveGameLevel();
+    }
+    private void selectorLevelGame(Levels level) {
+        minesweeper.getGUI().selectorLevelGame(level);
+        levelGameModeInfo.setText(String.valueOf(level));
+        pack();
+    }
+    private void showTotalConnectedClients() {
+        chatGUI.addTextToChat("Info: " + pseudoClients.size() + " client(s) connected.");
+    }
+
+    // NETWORK 
 
     /**
      * Sets the client parameters for the client session.
@@ -106,6 +197,7 @@ public class Client extends JFrame implements Runnable  {
             chatGUI.setOutputStream(out);
             
             // Read message from the server
+            
             chatReader.start();
 
             add(chatGUI);
@@ -125,11 +217,43 @@ public class Client extends JFrame implements Runnable  {
      */
     @Override
     public void run() {
+        minesweeper = new Main();
+        add(minesweeper.getGUI());
+        pack();
+        levelGameModeInfo.setText(String.valueOf(minesweeper.getField().getLevel()));
+
         String messageReceived;
         while (!message.equals("end")) {
             try {
                 messageReceived = in.readUTF();
-                chatGUI.addTextToChat(messageReceived);
+                if(messageReceived.equals("-1:initField")){
+                    int dimParam;
+                    boolean valueBool;
+                    dimParam = Integer.valueOf(in.readUTF());
+
+                    int numMinesToPlace;
+                    numMinesToPlace = Integer.valueOf(in.readUTF());
+                    minesweeper.getGUI().getField().setFieldFromClient(numMinesToPlace, dimParam);
+
+                    for(int x=0; x<dimParam; x++) {
+                        for(int y=0; y<dimParam; y++) {
+                            messageReceived = in.readUTF();
+                            if(messageReceived.equals("x")){
+                                valueBool = true;
+                            }
+                            else{
+                                valueBool = false;
+                            }
+                            minesweeper.getGUI().setFieldXY(x, y, valueBool);
+                            
+                        }
+                    }
+                    minesweeper.getGUI().resetMinesweeper();
+                    pack();
+                }
+                else{
+                    chatGUI.addTextToChat(messageReceived);
+                }
             } catch (IOException e) { // Server off
                 chatGUI.addTextToChat("Server offline... disconnected.");
                 message = "end";
@@ -137,5 +261,6 @@ public class Client extends JFrame implements Runnable  {
         }
         chatReader = null;
     }
+
 
 }

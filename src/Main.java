@@ -64,4 +64,12 @@ public class Main extends JPanel {
             System.out.println("Failed to load last save... EASY_Mode selected.");
         }
     }
+
+    public void setField(Levels level) {
+        this.field = new Field(level);
+    }
+
+    public GUI getGUI() {
+        return gui;
+    }
 }

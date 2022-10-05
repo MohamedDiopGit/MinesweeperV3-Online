@@ -4,14 +4,13 @@ import java.util.*;
 import java.util.List;
 import java.awt.*;
 import javax.swing.*;
-
 import java.io.*; // Streams
 import java.net.*;
 
 import static java.lang.Thread.currentThread;
 
 /**
- * {@code Server} : Main class that creates a server for communication between
+ * {@code Server} : minesweeper class that creates a server for communication between
  * multiple clients with dynamic multithreading.
  */
 public class ServerDynamic extends JFrame implements Runnable {
@@ -45,19 +44,15 @@ public class ServerDynamic extends JFrame implements Runnable {
     private JMenu connectedClients = new JMenu("Connected clients");
     
     /**
-     * Main Server program.
+     * minesweeper Server program.
      */
 
      
     /**
-     * Main GUI for the game : Minesweeper.
+     * minesweeper GUI for the game : Minesweeper.
      */
-    private GUI minesweeperGUI;
-    private Main main;
-    /**
-     * Field to start with in the game.
-     */
-    private Field field;
+    private Main minesweeper;
+    private JLabel levelGameModeInfo = new JLabel();
 
     public static void main(String args[]) {
         System.out.println("Running server...");
@@ -75,7 +70,7 @@ public class ServerDynamic extends JFrame implements Runnable {
         chatGUI = new ChatGUI(); // Default chat GUI : server side
         add(chatGUI);
         JMenuItem totalConnectedClient = new JMenuItem("Total connected clients");
-        JMenu infoMenu = new JMenu("Show infos");
+        JMenu infoMenu = new JMenu("Server infos");
 
         infoMenu.add(totalConnectedClient);    
         infoMenu.add(connectedClients);
@@ -83,17 +78,60 @@ public class ServerDynamic extends JFrame implements Runnable {
         totalConnectedClient.addActionListener(e-> showTotalConnectedClients() );
 
         JMenuBar menuBar = new JMenuBar();
-        menuBar.add(infoMenu);
+        
         setJMenuBar(menuBar);
 
         // GUI : Minesweeper interface
-        main = new Main();
-        minesweeperGUI = new GUI(main);
-        add(minesweeperGUI);
+
+        minesweeper = new Main();
+        add(minesweeper.getGUI());
+
+        JMenuItem menu = new JMenu("Mode");
+        JMenuItem easyMode = new JMenuItem("EASY");
+        JMenuItem mediumMode = new JMenuItem("MEDIUM");
+        JMenuItem hardMode = new JMenuItem("HARD");
+        JMenuItem customMode = new JMenuItem("CUSTOM");
+        JButton quit = new JButton("Quit");
+        JButton saveGame = new JButton("Save");
+
+        levelGameModeInfo.setText(String.valueOf(minesweeper.getField().getLevel()));
+
+        quit.setBackground(Color.RED);
+        quit.setForeground(Color.WHITE);
+        saveGame.setBackground(Color.ORANGE);
+        saveGame.setForeground(Color.WHITE);
+
+        menu.add(easyMode);
+        menu.add(mediumMode);
+        menu.add(hardMode);
+        menu.add(customMode);
+        
+
+        // Add menu options
+        saveGame.addActionListener(evt -> saveGameLevel());
+        quit.addActionListener(evt -> System.exit(0));
+
+        // Add different mode in the menu
+        easyMode.addActionListener(evt -> selectorLevelGame(Levels.EASY));
+        mediumMode.addActionListener(evt -> selectorLevelGame(Levels.MEDIUM));
+        hardMode.addActionListener(evt -> selectorLevelGame(Levels.HARD));
+        customMode.addActionListener(evt -> selectorLevelGame(Levels.CUSTOM));
+
+        JButton clientsFieldInit = new JButton("Init Clients Fields");
+        clientsFieldInit.addActionListener(evt -> sendToAllField());
+
+        menuBar.add(quit);
+        menuBar.add(saveGame);
+        menuBar.add(clientsFieldInit);
+        menuBar.add(infoMenu);
+        menuBar.add(menu);
+        menuBar.add(levelGameModeInfo);
+        
 
         // Frame settings
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Shuts down the server when exit
         pack();
+        // setResizable(false);
         setVisible(true);
 
 
@@ -108,13 +146,21 @@ public class ServerDynamic extends JFrame implements Runnable {
         }
     }
 
-    // NETWORK METHODS
+    // GUI METHODS
 
+    private void saveGameLevel() {
+        minesweeper.getGUI().saveGameLevel();
+    }
+    private void selectorLevelGame(Levels level) {
+        minesweeper.getGUI().selectorLevelGame(level);
+        levelGameModeInfo.setText(String.valueOf(level));
+        pack();
+    }
     private void showTotalConnectedClients() {
-        chatGUI.addTextToChat("Info: " + clients.size() + " client(s) connected.");
+        chatGUI.addTextToChat("Info: " + pseudoClients.size() + " client(s) connected.");
     }
 
-
+    // NETWORK
 
     @Override
     public void run() {
@@ -147,6 +193,7 @@ public class ServerDynamic extends JFrame implements Runnable {
             chatGUI.addTextToChat(getUtcDateTime() + " [" + pseudoClient + "]: " + " is connected");
             notifyConnectionToAll(idClient, pseudoClient, true, out);
             
+
             // Read data from client
             String message = "";
             while (!message.equals("end")) {
@@ -201,6 +248,29 @@ public class ServerDynamic extends JFrame implements Runnable {
         
     }
 
+    public void sendToAllField() {
+        outs.forEach(o -> {
+            try {
+                o.writeUTF("-1:initField");
+                int dimParam = minesweeper.getGUI().getField().getDim();
+                o.writeUTF(String.valueOf(dimParam));
+                int numMinesToPlace = minesweeper.getGUI().getField().getNumberOfMines();
+                o.writeUTF(String.valueOf(numMinesToPlace));
+
+                for(int x=0; x<dimParam; x++) {
+                    for(int y=0; y<dimParam; y++) {
+                        o.writeUTF(minesweeper.getGUI().getField().getElementFromXY(x,y, false));
+                    }
+                }
+                o.writeUTF("[Server]:Field reinitialization complete.");
+                
+            } catch (IOException e) {
+                System.out.println("error writing message : sendToAll");
+            }
+        });
+        
+    }
+
     /**
      * Notifies the connected client a specific client is connected
      * @param idClientConnected
@@ -229,4 +299,6 @@ public class ServerDynamic extends JFrame implements Runnable {
     public static String getUtcDateTime() {
         return ZonedDateTime.now(ZoneId.of("Etc/UTC")).format(FORMATTER);
     }
+
+
 }

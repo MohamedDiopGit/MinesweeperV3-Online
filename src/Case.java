@@ -54,44 +54,43 @@ public class Case extends JPanel implements MouseListener {
             if(exit && !clicked) {
                 super.paintComponent(g); // appel méthode mère (efface le dessin précedent)
 
-                
-
-
-                double deltaX = Math.abs(xOnStart - xBox);
-                double deltaY = Math.abs(yOnStart - yBox);
-                double result = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                Random alea = new Random();
-                if ((result <= alea.nextDouble((int) dimParam / 1.5)) && !text.equals("x") ) { // Undisover boxes that are in a calculated
-                    switch (Integer.valueOf(text)) { // Set the Color of the number depending on
-                        // its value
-                        case 0:
-                            g.setColor(Color.GRAY);
-                            break;
-                        case 1:
-                            g.setColor(Color.BLUE);
-                            break;
-                        case 2:
-                            g.setColor(Color.GREEN);
-                            break;
-                        case 3:
-                            g.setColor(Color.RED);
-                            break;
-                        case 4:
-                            g.setColor(Color.ORANGE);
-                            break;
-                        case 5:
-                            g.setColor(Color.MAGENTA);
-                            break;
-                        case 6:
-                            g.setColor(Color.CYAN);
-                            break;
-                    }
-                    g.drawString(text, getWidth()/2, getHeight()/2);
-                }
-                else{
-                    g.setColor(Color.lightGray);
-                    g.fillRect(0,0, getWidth(), getHeight()); // dessin du texte à la position i,j
-                }
+                // double deltaX = Math.abs(xOnStart - xBox);
+                // double deltaY = Math.abs(yOnStart - yBox);
+                // double result = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                // Random alea = new Random();
+                // if ((result <= alea.nextDouble((int) dimParam / 1.5)) && !text.equals("x") ) { // Undisover boxes that are in a calculated
+                //     switch (Integer.valueOf(text)) { // Set the Color of the number depending on
+                //         // its value
+                //         case 0:
+                //             g.setColor(Color.GRAY);
+                //             break;
+                //         case 1:
+                //             g.setColor(Color.BLUE);
+                //             break;
+                //         case 2:
+                //             g.setColor(Color.GREEN);
+                //             break;
+                //         case 3:
+                //             g.setColor(Color.RED);
+                //             break;
+                //         case 4:
+                //             g.setColor(Color.ORANGE);
+                //             break;
+                //         case 5:
+                //             g.setColor(Color.MAGENTA);
+                //             break;
+                //         case 6:
+                //             g.setColor(Color.CYAN);
+                //             break;
+                //     }
+                //     g.drawString(text, getWidth()/2, getHeight()/2);
+                // }
+                // else{
+                //     g.setColor(Color.lightGray);
+                //     g.fillRect(0,0, getWidth(), getHeight()); // dessin du texte à la position i,j
+                // }
+                g.setColor(Color.lightGray);
+                g.fillRect(0,0, getWidth(), getHeight()); // dessin du texte
                 enter = false;
             }
             else if(released && !clicked) {
