@@ -46,10 +46,10 @@ public class Client extends JFrame implements Runnable  {
     private JMenu connectedClients = new JMenu("Connected clients");
     private static List<String> pseudoClients = new ArrayList<String>();
     Client() {
-        // setClientParameters();
+        setClientParameters();
         Random r = new Random();
+        // runClient("localhost", 10000,"Client-"+alea);  // Dev usage
         int alea = r.nextInt((100 - 0) + 1) + 0;
-        runClient("localhost", 10000,"Client-"+alea);  // Dev usage
 
 
         setTitle("Client-"+alea + ": " + "Chat box");
