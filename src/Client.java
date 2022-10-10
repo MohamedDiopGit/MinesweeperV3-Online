@@ -39,7 +39,7 @@ public class Client extends JFrame implements Runnable  {
      */
     private Main minesweeper;
     private JLabel levelGameModeInfo = new JLabel();
-    
+    private String pseudo;
     /**
      * Label for connected clients in the subMenu
      */
@@ -47,12 +47,12 @@ public class Client extends JFrame implements Runnable  {
     private static List<String> pseudoClients = new ArrayList<String>();
     Client() {
         setClientParameters();
-        Random r = new Random();
-        // runClient("localhost", 10000,"Client-"+alea);  // Dev usage
-        int alea = r.nextInt((100 - 0) + 1) + 0;
+        // Random r = new Random();
+        // // runClient("localhost", 10000,"Client-"+alea);  // Dev usage
+        // int alea = r.nextInt((100 - 0) + 1) + 0;
 
 
-        setTitle("Client-"+alea + ": " + "Chat box");
+        setTitle("Client: "+pseudo);
         setLayout(new FlowLayout());
 
         // Chat GUI display (Menu)
@@ -151,7 +151,7 @@ public class Client extends JFrame implements Runnable  {
         if (option == JOptionPane.OK_OPTION) { // Check if something is entered
             String address = addressField.getText();
             int port = Integer.valueOf(portField.getText());
-            String pseudo = pseudoField.getText();
+            pseudo = pseudoField.getText();
             runClient(address, port, pseudo);
         } else {
             JOptionPane.showMessageDialog(null, "Nothing selected. Press OK to exit.",

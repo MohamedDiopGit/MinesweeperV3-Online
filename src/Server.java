@@ -13,7 +13,7 @@ import static java.lang.Thread.currentThread;
  * {@code Server} : minesweeper class that creates a server for communication between
  * multiple clients with dynamic multithreading.
  */
-public class ServerDynamic extends JFrame implements Runnable {
+public class Server extends JFrame implements Runnable {
     /**
      * Server socket center.
      */
@@ -56,12 +56,12 @@ public class ServerDynamic extends JFrame implements Runnable {
 
     public static void main(String args[]) {
         System.out.println("Running server...");
-        new ServerDynamic();
+        new Server();
     }
     /**
      * Constructor for the server.
      */
-    ServerDynamic() {
+    Server() {
 
         setTitle("Server");
         setLayout(new FlowLayout());
