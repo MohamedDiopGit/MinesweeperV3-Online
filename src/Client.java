@@ -16,7 +16,7 @@ public class Client extends JFrame implements Runnable  {
     /**
      * Chat box.
      */
-    private ChatGUI chatGUI;
+    private ChatClient chatClient;
     /**
      * Message to send.
      */
@@ -129,7 +129,7 @@ public class Client extends JFrame implements Runnable  {
         pack();
     }
     private void showTotalConnectedClients() {
-        chatGUI.addTextToChat("Info: " + pseudoClients.size() + " client(s) connected.");
+        chatClient.addTextToChat("Info: " + pseudoClients.size() + " client(s) connected.");
     }
 
     // NETWORK 
@@ -193,8 +193,8 @@ public class Client extends JFrame implements Runnable  {
             System.out.println("Client id: " + idClient);      
             
             // Initialize the message box
-            chatGUI = new ChatGUI(pseudo);
-            chatGUI.setOutputStream(out);
+            chatClient = new ChatClient(pseudo);
+            chatClient.setOutputStream(out);
 
             // Initialize the minesweeper
             minesweeper = new Main();
@@ -207,7 +207,7 @@ public class Client extends JFrame implements Runnable  {
             
             chatReader.start();
 
-            add(chatGUI);
+            add(chatClient);
             add(minesweeper.getGUI());
             pack();
             setVisible(true);
@@ -271,10 +271,10 @@ public class Client extends JFrame implements Runnable  {
                     minesweeper.getGUI().updateBoxOnClient(xReceived, yReceived, "leftClick");
                 }
                 else{
-                    chatGUI.addTextToChat(messageReceived);
+                    chatClient.addTextToChat(messageReceived);
                 }
             } catch (IOException e) { // Server off
-                chatGUI.addTextToChat("Server offline... disconnected.");
+                chatClient.addTextToChat("Server offline... disconnected.");
                 message = "end";
             }
         }

@@ -11,7 +11,7 @@ import java.io.IOException;
  * {@code ChatGUI} : Class that displays the chat box for the server. Acts like
  * a log terminal.
  */
-public class ChatGUI extends JPanel implements ActionListener {
+public class ChatServer extends JPanel implements ActionListener {
     /**
      * Text area for the chat
      */
@@ -30,7 +30,7 @@ public class ChatGUI extends JPanel implements ActionListener {
     /**
      * Constructor by default for the chat GUI server.
      */
-    ChatGUI() {
+    ChatServer() {
         
 
         JLabel chatTitle = new JLabel("Server : Chat box", SwingConstants.CENTER);
@@ -49,52 +49,6 @@ public class ChatGUI extends JPanel implements ActionListener {
         add(chatSubTitle, BorderLayout.SOUTH);
         
 
-    }
-
-
-    /**
-     * Constructor for the client session
-     * 
-     * @param title
-     */
-    ChatGUI(String title) {
-    
-        // Parameters text areas.
-        int width = 30;
-
-        JLabel chatTitle = new JLabel(title + " : Chat box", SwingConstants.CENTER);
-        JLabel chatSubTitle = new JLabel("Send a message here  ", SwingConstants.CENTER);
-        textOutput = new JTextArea(10, width);
-        textInput = new JTextField(width);
-        textInput.addActionListener((ActionListener) this);
-        textOutput.setEditable(false);
-
-        JPanel panelSouth = new JPanel(new BorderLayout());
-
-        JScrollPane scrollOutput = new JScrollPane(textOutput);
-        DefaultCaret caret = (DefaultCaret) textOutput.getCaret();
-        caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
-        JScrollPane scrollInput = new JScrollPane(textInput);
-
-
-        setLayout(new BorderLayout());
-        
-        panelSouth.add(scrollInput, BorderLayout.WEST);
-        panelSouth.add(chatSubTitle, BorderLayout.CENTER);
-
-        add(chatTitle, BorderLayout.NORTH);
-        add(scrollOutput, BorderLayout.CENTER);
-        add(panelSouth, BorderLayout.SOUTH);
-
-    }
-
-    /**
-     * Client : Setter which take the outstream of {@code Client} to {@code Server}.
-     * 
-     * @param outStream
-     */
-    public void setOutputStream(DataOutputStream outStream) {
-        this.out = outStream;
     }
 
     /**

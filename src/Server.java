@@ -29,9 +29,9 @@ public class Server extends JFrame implements Runnable {
     private static List<DataOutputStream> outs = new ArrayList<DataOutputStream>();
     /**
      * Chat box built in a GUI.
-     * see {@code ChatGUI}
+     * see {@code ChatServer}
      */
-    private ChatGUI chatGUI;
+    private ChatServer chatServer;
 
     /**
      * Data formatter to send the data with messages
@@ -67,8 +67,8 @@ public class Server extends JFrame implements Runnable {
         setLayout(new FlowLayout());
 
         // Chat GUI display
-        chatGUI = new ChatGUI(); // Default chat GUI : server side
-        add(chatGUI);
+        chatServer = new ChatServer(); // Default chat GUI : server side
+        add(chatServer);
         JMenuItem totalConnectedClient = new JMenuItem("Total connected clients");
         JMenu infoMenu = new JMenu("Server infos");
 
@@ -159,7 +159,7 @@ public class Server extends JFrame implements Runnable {
         sendToAllField();
     }
     private void showTotalConnectedClients() {
-        chatGUI.addTextToChat("Info: " + pseudoClients.size() + " client(s) connected.");
+        chatServer.addTextToChat("Info: " + pseudoClients.size() + " client(s) connected.");
     }
 
     // NETWORK
@@ -192,7 +192,7 @@ public class Server extends JFrame implements Runnable {
             out.writeInt(idClient);
             
             // Connection notification to all clients connected
-            chatGUI.addTextToChat(getUtcDateTime() + " [" + pseudoClient + "]: " + " is connected");
+            chatServer.addTextToChat(getUtcDateTime() + " [" + pseudoClient + "]: " + " is connected");
             notifyConnectionToAll(idClient, pseudoClient, true, out);
             
             sendToAllField();
@@ -220,7 +220,7 @@ public class Server extends JFrame implements Runnable {
                     }
                     else{
 
-                        chatGUI.addTextToChat(getUtcDateTime() + " :[" + pseudoClient + "]: " + message);
+                        chatServer.addTextToChat(getUtcDateTime() + " :[" + pseudoClient + "]: " + message);
                         sendToAll(pseudoClient, message); // Broadcast to the others connected clients
                     }
                 } catch (EOFException | SocketException e) {
@@ -229,7 +229,7 @@ public class Server extends JFrame implements Runnable {
             }
 
             // Clean close of the session
-            chatGUI.addTextToChat(getUtcDateTime() + " [" + pseudoClient + "]: " + " has disconnected.");
+            chatServer.addTextToChat(getUtcDateTime() + " [" + pseudoClient + "]: " + " has disconnected.");
             notifyConnectionToAll(idClient, pseudoClient, false, out);
 
             out.close();
@@ -268,7 +268,7 @@ public class Server extends JFrame implements Runnable {
                 System.out.println("error writing message : notifyConnectionToAll");
             }
         });
-        chatGUI.addTextToChat("Update box: " + xReceived + " " + yReceived + " " + typeClicked);
+        chatServer.addTextToChat("Update box: " + xReceived + " " + yReceived + " " + typeClicked);
     }
 
     /**
