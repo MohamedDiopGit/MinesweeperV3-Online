@@ -86,20 +86,17 @@ public class Server extends JFrame implements Runnable {
         minesweeper = new Main();
         add(minesweeper.getGUI());
 
-        JMenuItem menu = new JMenu("Mode");
+        JMenuItem menu = new JMenu("Mode Menu");
         JMenuItem easyMode = new JMenuItem("EASY");
         JMenuItem mediumMode = new JMenuItem("MEDIUM");
         JMenuItem hardMode = new JMenuItem("HARD");
         JMenuItem customMode = new JMenuItem("CUSTOM");
         JButton quit = new JButton("Quit");
-        JButton saveGame = new JButton("Save");
 
         levelGameModeInfo.setText(String.valueOf(minesweeper.getField().getLevel()));
 
         quit.setBackground(Color.RED);
         quit.setForeground(Color.WHITE);
-        saveGame.setBackground(Color.ORANGE);
-        saveGame.setForeground(Color.WHITE);
 
         menu.add(easyMode);
         menu.add(mediumMode);
@@ -108,7 +105,6 @@ public class Server extends JFrame implements Runnable {
         
 
         // Add menu options
-        saveGame.addActionListener(evt -> saveGameLevel());
         quit.addActionListener(evt -> System.exit(0));
 
         // Add different mode in the menu
@@ -117,12 +113,8 @@ public class Server extends JFrame implements Runnable {
         hardMode.addActionListener(evt -> selectorLevelGame(Levels.HARD));
         customMode.addActionListener(evt -> selectorLevelGame(Levels.CUSTOM));
 
-        JButton clientsFieldInit = new JButton("Init Clients Fields");
-        clientsFieldInit.addActionListener(evt -> sendToAllField());
 
         menuBar.add(quit);
-        menuBar.add(saveGame);
-        menuBar.add(clientsFieldInit);
         menuBar.add(infoMenu);
         menuBar.add(menu);
         menuBar.add(levelGameModeInfo);
@@ -148,9 +140,6 @@ public class Server extends JFrame implements Runnable {
 
     // GUI METHODS
 
-    private void saveGameLevel() {
-        minesweeper.getGUI().saveGameLevel();
-    }
     private void selectorLevelGame(Levels level) {
         minesweeper.getGUI().selectorLevelGame(level);
         levelGameModeInfo.setText(String.valueOf(level));
@@ -187,7 +176,7 @@ public class Server extends JFrame implements Runnable {
             JMenuItem pseudoClientItem = new JMenuItem(pseudoClient);
             pseudoClients.add(pseudoClient);
             connectedClients.add(pseudoClientItem);
-
+            
             // Send data : unique id of the client.
             out.writeInt(idClient);
             
@@ -195,6 +184,7 @@ public class Server extends JFrame implements Runnable {
             chatServer.addTextToChat(getUtcDateTime() + " [" + pseudoClient + "]: " + " is connected");
             notifyConnectionToAll(idClient, pseudoClient, true, out);
             
+            updateConnectedClientToAll();
             sendToAllField();
             // Read data from client
             String message = "";
@@ -232,6 +222,7 @@ public class Server extends JFrame implements Runnable {
             chatServer.addTextToChat(getUtcDateTime() + " [" + pseudoClient + "]: " + " has disconnected.");
             notifyConnectionToAll(idClient, pseudoClient, false, out);
 
+
             out.close();
             outs.remove(out);
 
@@ -240,6 +231,7 @@ public class Server extends JFrame implements Runnable {
 
             pseudoClients.remove(pseudoClient);
             connectedClients.remove(pseudoClientItem);
+            updateConnectedClientToAll();
 
         } catch (IOException e) {// Quick cleaning
             // throw new RuntimeException();
@@ -248,6 +240,24 @@ public class Server extends JFrame implements Runnable {
         clients.remove(currentThread());
     }
 
+    private void updateConnectedClientToAll() {
+        chatServer.addTextToChat("Update to all : " + pseudoClients.size() + " client(s) connected.");
+        outs.forEach(o -> {
+            try {
+                o.writeUTF("-1:connectedClients");
+                o.writeInt(pseudoClients.size());
+                pseudoClients.forEach(pseudo -> {
+                    try {
+                        o.writeUTF(pseudo);
+                    } catch (IOException e) {
+                        System.out.println("error writing message : updateConnectedClientToAll");
+                    }
+                });
+            } catch (IOException e) {
+                System.out.println("error writing message : updateConnectedClientToAll");
+            }
+        });
+    }
     private void resetServerMineSweeper(){
         minesweeper.getGUI().reInitField();
     }
@@ -302,6 +312,7 @@ public class Server extends JFrame implements Runnable {
                         o.writeUTF(minesweeper.getGUI().getField().getElementFromXY(x,y, false));
                     }
                 }
+                o.writeUTF(levelGameModeInfo.getText());
                 o.writeUTF("[Server]:Field reinitialization complete.");
                 
             } catch (IOException e) {

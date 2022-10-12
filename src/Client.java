@@ -3,8 +3,6 @@ import java.net.*;
 import java.util.Random;
 import java.io.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * {@code Client} : Client program that makes a connection with a {@code Server}
@@ -43,94 +41,55 @@ public class Client extends JFrame implements Runnable  {
     /**
      * Label for connected clients in the subMenu
      */
-    private JMenu connectedClients = new JMenu("Connected clients");
-    private static List<String> pseudoClients = new ArrayList<String>();
+    
+    private JMenuItem connectedClient;
+    private JMenu connectedClients = new JMenu();
+
     Client() {
+        // Realease version mode
         setClientParameters();
+
+        // Debugging mode
         // Random r = new Random();
-        // // runClient("localhost", 10000,"Client-"+alea);  // Dev usage
         // int alea = r.nextInt((100 - 0) + 1) + 0;
-
-
-        setTitle("Client: "+pseudo);
+        // runClient("localhost", 10000,"Client-"+alea);  // Dev usage
+        // setTitle("Client: "+alea);
+        
         setLayout(new FlowLayout());
 
         // Chat GUI display (Menu)
-        JMenuItem totalConnectedClient = new JMenuItem("Total connected clients");
-        JMenu infoMenu = new JMenu("Server infos");
+        JMenu infoServer = new JMenu("Server infos");
+        JMenuItem modeSolo = new JMenuItem("Mode solo");
+        connectedClients = new JMenu("Connected clients");
 
-        infoMenu.add(totalConnectedClient);    
-        infoMenu.add(connectedClients);
-
-        totalConnectedClient.addActionListener(e-> showTotalConnectedClients() );
+        infoServer.add(modeSolo);    
+        infoServer.add(connectedClients);
 
         JMenuBar menuBar = new JMenuBar();
-        menuBar.add(infoMenu);
         setJMenuBar(menuBar);
 
-        // GUI : Minesweeper interface
-
-        // minesweeper = new Main();
-        // add(minesweeper.getGUI());
-
-        JMenuItem menu = new JMenu("Mode");
-        JMenuItem easyMode = new JMenuItem("EASY");
-        JMenuItem mediumMode = new JMenuItem("MEDIUM");
-        JMenuItem hardMode = new JMenuItem("HARD");
-        JMenuItem customMode = new JMenuItem("CUSTOM");
+        JLabel levelMode = new JLabel(" Mode ");
         JButton quit = new JButton("Quit");
-        JButton saveGame = new JButton("Save");
-
         
 
         quit.setBackground(Color.RED);
         quit.setForeground(Color.WHITE);
-        saveGame.setBackground(Color.ORANGE);
-        saveGame.setForeground(Color.WHITE);
-
-        menu.add(easyMode);
-        menu.add(mediumMode);
-        menu.add(hardMode);
-        menu.add(customMode);
-        menuBar.add(quit);
-        menuBar.add(saveGame);
-        menuBar.add(menu);
-
-        // Add menu options
-        saveGame.addActionListener(evt -> saveGameLevel());
         quit.addActionListener(evt -> System.exit(0));
 
-        // Add different mode in the menu
-        easyMode.addActionListener(evt -> selectorLevelGame(Levels.EASY));
-        mediumMode.addActionListener(evt -> selectorLevelGame(Levels.MEDIUM));
-        hardMode.addActionListener(evt -> selectorLevelGame(Levels.HARD));
-        customMode.addActionListener(evt -> selectorLevelGame(Levels.CUSTOM));
-
-
+        menuBar.add(quit);
+        menuBar.add(infoServer);
+        menuBar.add(levelMode);
         menuBar.add(levelGameModeInfo);
         
 
         // Frame settings
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Shuts down the server when exit
+        setResizable(false);
+        // setVisible(true);
         pack();
-        // setResizable(false);
-        setVisible(true);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Shuts down the server when exit
     }
 
     // GUI METHODS
-
-    private void saveGameLevel() {
-        minesweeper.getGUI().saveGameLevel();
-    }
-    private void selectorLevelGame(Levels level) {
-        minesweeper.getGUI().selectorLevelGame(level);
-        levelGameModeInfo.setText(String.valueOf(level));
-        pack();
-    }
-    private void showTotalConnectedClients() {
-        chatClient.addTextToChat("Info: " + pseudoClients.size() + " client(s) connected.");
-    }
 
     // NETWORK 
 
@@ -254,6 +213,8 @@ public class Client extends JFrame implements Runnable  {
                             
                         }
                     }
+                    messageReceived = in.readUTF();
+                    levelGameModeInfo.setText(messageReceived);
                     minesweeper.getGUI().resetMinesweeperParameters();
                     minesweeper.getGUI().initializationField();
                     pack();
@@ -269,6 +230,15 @@ public class Client extends JFrame implements Runnable  {
                     xReceived = in.readInt();
                     yReceived = in.readInt();
                     minesweeper.getGUI().updateBoxOnClient(xReceived, yReceived, "leftClick");
+                }
+                else if(messageReceived.equals("-1:connectedClients")){
+                    int totalConnected = in.readInt();
+                    connectedClients.removeAll();
+                    for(int i = 0; i < totalConnected; i++) {
+                        messageReceived = in.readUTF();
+                        connectedClient = new JMenuItem(messageReceived);
+                        connectedClients.add(connectedClient);
+                    }
                 }
                 else{
                     chatClient.addTextToChat(messageReceived);

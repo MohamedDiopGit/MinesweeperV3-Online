@@ -17,7 +17,7 @@ public class Main extends JPanel {
     private Field field;
 
     public Main() {
-        loadGameLevel(); // Load the game level
+        field = new Field(Levels.EASY);
         this.field.initField(); // initialisation of the field
 
         gui = new GUI(this);
@@ -41,28 +41,6 @@ public class Main extends JPanel {
      */
     public Field getField() { // Getter of the field
         return this.field;
-    }
-
-    /**
-     * Loads the saved level's configuration from "LevelRegistred.dat"
-     * 
-     * @see LevelsFileReader
-     */
-    public void loadGameLevel() {
-
-        try {
-            LevelsFileReader fileReader = new LevelsFileReader();
-
-            // Waiting for the reader thread to finish loading the level mmode
-            fileReader.geThread().join();
-
-            // Configure the field with the level mode.
-            field = new Field(fileReader.getLevelFromFile());
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            System.out.println("Failed to load last save... EASY_Mode selected.");
-        }
     }
 
     public void setField(Levels level) {

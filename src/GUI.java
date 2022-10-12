@@ -136,7 +136,6 @@ public class GUI extends JPanel {
      * @see #displayMenu()
      * @see #displayScore()
      * @see #timeElapsed()
-     * @see #restartButton()
      * @see #reInitField()
      * @see #displayStartEmptyField()
      */
@@ -144,7 +143,6 @@ public class GUI extends JPanel {
         setLayout(new BorderLayout());
         this.timeElapsed();
         this.displayScore();
-        this.restartButton();
         this.reInitField();
     }
 
@@ -295,23 +293,7 @@ public class GUI extends JPanel {
     public void setOutputStream(DataOutputStream out){
         this.outStream = out;
     }
-    /**
-     * Activates the restart button by adding an {@code ActionListener} event
-     * on the restart button. It will call the {@code reInitField()} method.
-     * 
-     * @see #reInitField()
-     */
-    public void restartButton() { // Restart a game
-        restart.setBackground(Color.WHITE);
-        add(restart, BorderLayout.SOUTH);
-        restart.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                reInitField();
-            }
-        });
 
-    }
 
     /**
      * Generates a new field, and restarts the timer, and the score of the current
@@ -371,12 +353,6 @@ public class GUI extends JPanel {
 
     }
 
-    /**
-     * Saves the game level in a local file "LevelRegistred.dat"
-     */
-    public void saveGameLevel() {
-        new LevelsFileWriter(this.levelGame);
-    }
     public void setFieldXY(int x, int y, boolean value) {
         field.setFieldGrid(x, y, value);
     }
